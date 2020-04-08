@@ -9,7 +9,7 @@ use std::process::exit;
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.len() < 1 {
-        println!("Usage: rloxs [script]");
+        println!("Usage: salal [script]");
         exit(64);
     } else if args.len() == 1 {
         run_file(&args[0])?;

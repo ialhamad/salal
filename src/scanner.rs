@@ -155,9 +155,7 @@ impl Scanner {
                 self.current += 1;
             }
         }
-        let value = self.source[self.start..self.current]
-            .into_iter()
-            .collect::<String>();
+        let value = self.source[self.start..self.current].into_iter().collect();
         Ok(Some(Token::new(TokenType::Number, value, self.line)))
     }
     pub fn identifier(&mut self) -> Result<Option<Token>, SalalError> {

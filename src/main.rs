@@ -23,19 +23,20 @@ fn run_file(filename: &str) -> Result<()> {
     let mut file = File::open(filename)?;
     let mut buffer = String::new();
     file.read_to_string(&mut buffer)?;
-    run(buffer);
+    run(buffer)?;
     Ok(())
 }
 fn run_prompt() -> Result<()> {
     loop {
         let mut buffer = String::new();
         io::stdin().read_line(&mut buffer)?;
-        run(buffer);
+        run(buffer)?;
     }
 }
-fn run(source: String) {
+fn run(source: String) -> Result<()> {
     println!("{}", source);
     let mut scanner = Scanner::new(source);
-    let tokens = scanner.scan();
+    let tokens = scanner.scan()?;
     println!("{:?}", tokens);
+    Ok(())
 }

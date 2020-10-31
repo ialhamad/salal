@@ -1,9 +1,19 @@
+use std::fmt;
+
+use crate::tokens::Token;
+
 #[derive(Debug)]
 pub enum UnaryOperator {
     Bang,
     Minus,
 }
-
+impl fmt::Display for UnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
 #[derive(Debug, Clone, Copy)]
 pub enum BinaryOperator {
     Minus,
@@ -17,36 +27,11 @@ pub enum BinaryOperator {
     Greater,
     GreaterEqual,
 }
-
-pub enum Expr {
-    Binary(Binary),
-    Grouping(Grouping),
-    Literal(Literal),
-    Unary(Unary),
-}
-
-impl Expr {
-    pub fn binary(operator: BinaryOperator, left: Expr, right: Expr) -> Self {
-        Expr::Binary(Binary {
-            left: Box::new(left),
-            right: Box::new(right),
-            operator,
-        })
-    }
-
-    pub fn logical(operator: LogicalOperator, left: Expr, right: Expr) -> Self {
-        Expr::Logical(Logical {
-            left: Box::new(left),
-            right: Box::new(right),
-            operator,
-        })
-    }
-
-    pub fn unary(operator: UnaryOperator, unary: Expr) -> Self {
-        Expr::Unary(Unary {
-            operator,
-            unary: Box::new(unary),
-        })
+impl fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
     }
 }
 pub struct Binary {
@@ -66,4 +51,42 @@ pub enum Literal {
 pub struct Unary {
     pub operator: UnaryOperator,
     pub right: Box<Expr>,
+}
+pub struct Logical {
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
+}
+
+pub enum Expr {
+    Binary(Binary),
+    Grouping(Grouping),
+    Literal(Literal),
+    Unary(Unary),
+    Logical(Logical),
+}
+
+impl Expr {
+    pub fn binary(operator: BinaryOperator, left: Expr, right: Expr) -> Self {
+        Expr::Binary(Binary {
+            left: Box::new(left),
+            right: Box::new(right),
+            operator,
+        })
+    }
+
+    pub fn logical(operator: Token, left: Expr, right: Expr) -> Self {
+        Expr::Logical(Logical {
+            left: Box::new(left),
+            right: Box::new(right),
+            operator,
+        })
+    }
+
+    pub fn unary(operator: UnaryOperator, unary: Expr) -> Self {
+        Expr::Unary(Unary {
+            operator,
+            right: Box::new(unary),
+        })
+    }
 }

@@ -1,26 +1,31 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
-    pub ty: TokenType,
+    pub variant: TokenVariant,
     pub lexeme: String,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(ty: TokenType, lexeme: String, line: usize) -> Self {
-        Self { ty, lexeme, line }
+    pub fn new(variant: TokenVariant, lexeme: String, line: usize) -> Self {
+        Self {
+            variant,
+            lexeme,
+            line,
+        }
     }
 }
 
 impl fmt::Display for Token {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} {}", self.ty, self.lexeme)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?} {}", self.variant, self.lexeme)
     }
 }
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum TokenType {
-    // Single character tokens.
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum TokenVariant {
+    // Single-character tokens.
     LeftParen,
     RightParen,
     LeftBrace,
@@ -44,9 +49,9 @@ pub enum TokenType {
     LessEqual,
 
     // Literals.
-    Identifier,
-    String,
-    Number,
+    Identifier(String),
+    String(String),
+    Number(f64),
 
     // Keywords.
     And,

@@ -8,7 +8,7 @@ use std::process::exit;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
-    if args.len() < 1 {
+    if args.is_empty() {
         println!("Usage: salal [script]");
         exit(64);
     } else if args.len() == 1 {
@@ -37,6 +37,6 @@ fn run(source: String) -> Result<()> {
     println!("{}", source);
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan()?;
-    println!("{:?}", tokens);
+    println!("{:#?}", tokens);
     Ok(())
 }

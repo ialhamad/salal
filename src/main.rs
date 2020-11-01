@@ -1,5 +1,5 @@
 use anyhow::Result;
-use salal::scanner::Scanner;
+use salal::{ast_printer::pretty_print, parser::Parser, scanner::Scanner};
 use std::env;
 use std::fs::File;
 use std::io;
@@ -34,9 +34,10 @@ fn run_prompt() -> Result<()> {
     }
 }
 fn run(source: String) -> Result<()> {
-    println!("{}", source);
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan()?;
-    println!("{:#?}", tokens);
+    let mut parser = Parser::new(tokens);
+    let expr = parser.parse().unwrap();
+    println!("{}", pretty_print(&expr));
     Ok(())
 }

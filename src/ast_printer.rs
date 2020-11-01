@@ -8,10 +8,18 @@ pub fn pretty_print(expr: &Expr) -> String {
             Literal::StringLiteral(s) => s.clone(),
             Literal::NumberLiteral(n) => n.to_string(),
         },
-        Expr::Binary(b) => parenthize(&b.operator.to_string(), vec![&b.left, &b.right]),
-        Expr::Grouping(g) => parenthize("group", vec![&g.expr]),
-        Expr::Unary(u) => parenthize(&u.operator.to_string(), vec![&u.right]),
-        Expr::Logical(l) => parenthize(&l.operator.to_string(), vec![&l.left, &l.right]),
+        Expr::Binary(Binary {
+            operator,
+            left,
+            right,
+        }) => parenthize(operator.lexeme.as_str(), vec![left, right]),
+        Expr::Grouping(Grouping { expr }) => parenthize("group", vec![expr]),
+        Expr::Unary(Unary { operator, right }) => parenthize(operator.lexeme.as_str(), vec![right]),
+        Expr::Logical(Logical {
+            operator,
+            left,
+            right,
+        }) => parenthize(operator.lexeme.as_str(), vec![left, right]),
     }
 }
 

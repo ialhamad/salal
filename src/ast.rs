@@ -1,63 +1,35 @@
-use std::fmt;
-
 use crate::tokens::Token;
 
 #[derive(Debug)]
-pub enum UnaryOperator {
-    Bang,
-    Minus,
-}
-impl fmt::Display for UnaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
-}
-#[derive(Debug, Clone, Copy)]
-pub enum BinaryOperator {
-    Minus,
-    Plus,
-    Slash,
-    Star,
-    Equal,
-    NotEqual,
-    Less,
-    LessEqual,
-    Greater,
-    GreaterEqual,
-}
-impl fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
-}
 pub struct Binary {
     pub left: Box<Expr>,
-    pub operator: BinaryOperator,
+    pub operator: Token,
     pub right: Box<Expr>,
 }
+#[derive(Debug)]
 pub struct Grouping {
     pub expr: Box<Expr>,
 }
+#[derive(Debug)]
 pub enum Literal {
     NilLiteral,
     BoolLiteral(bool),
     StringLiteral(String),
     NumberLiteral(f64),
 }
+#[derive(Debug)]
 pub struct Unary {
-    pub operator: UnaryOperator,
+    pub operator: Token,
     pub right: Box<Expr>,
 }
+#[derive(Debug)]
 pub struct Logical {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
+#[derive(Debug)]
 pub enum Expr {
     Binary(Binary),
     Grouping(Grouping),
@@ -67,7 +39,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn binary(operator: BinaryOperator, left: Expr, right: Expr) -> Self {
+    pub fn binary(operator: Token, left: Expr, right: Expr) -> Self {
         Expr::Binary(Binary {
             left: Box::new(left),
             right: Box::new(right),
@@ -83,7 +55,12 @@ impl Expr {
         })
     }
 
-    pub fn unary(operator: UnaryOperator, unary: Expr) -> Self {
+    pub fn grouping(grouping: Expr) -> Self {
+        Expr::Grouping(Grouping {
+            expr: Box::new(grouping),
+        })
+    }
+    pub fn unary(operator: Token, unary: Expr) -> Self {
         Expr::Unary(Unary {
             operator,
             right: Box::new(unary),

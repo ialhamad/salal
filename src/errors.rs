@@ -1,25 +1,49 @@
 use std::{error::Error, fmt};
-#[derive(Debug)]
-pub struct SalalError {
-    details: String,
+
+use crate::tokens::Token;
+#[derive(Debug, Clone)]
+pub struct LoxError {
+    message: String,
 }
 
-impl SalalError {
-    pub fn new(msg: &str) -> SalalError {
-        SalalError {
-            details: msg.to_string(),
+impl LoxError {
+    pub fn new(msg: &str) -> Self {
+        Self {
+            message: String::from(msg),
         }
     }
 }
 
-impl fmt::Display for SalalError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
+impl Error for LoxError {}
+
+impl fmt::Display for LoxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
     }
 }
 
-impl Error for SalalError {
-    fn description(&self) -> &str {
-        &self.details
+#[derive(Debug, Clone)]
+pub struct ParserError {
+    token: Option<Token>,
+}
+
+impl ParserError {
+    pub fn new(token: Option<Token>) -> Self {
+        Self { token }
+    }
+}
+
+impl Error for ParserError {}
+
+impl fmt::Display for ParserError {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.token {
+            Some(t) => format!(
+                "Parsing error: Unexpected token '{}'({:?}) at line {}",
+                t.lexeme, t.variant, t.line
+            ),
+            None => "Parsing error: Unexpectedly reached end of file".to_string(),
+        };
+        Ok(())
     }
 }

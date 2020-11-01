@@ -1,8 +1,11 @@
 use crate::{
-    ast::Expr,
-    tokens::{Token, TokenVariant},
+    ast::{Expr, Literal},
+    errors::ParserError,
+    tokens::{Token, TokenVariant::*},
 };
-use anyhow::Result;
+use std::result::Result as StdResult;
+
+type Result<T> = StdResult<T, ParserError>;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -17,56 +20,155 @@ impl Parser {
 }
 
 impl Parser {
+    pub fn parse(&mut self) -> Result<Expr> {
+        self.expression()
+    }
+    fn expression(&mut self) -> Result<Expr> {
+        self.equality()
+    }
+
     fn equality(&mut self) -> Result<Expr> {
-        // Expr expr = comparison();
-
-        // while (match(BANG_EQUAL, EQUAL_EQUAL)) {
-        //   Token operator = previous();
-        //   Expr right = comparison();
-        //   expr = new Expr.Binary(expr, operator, right);
-        // }
-
-        // return expr;
-        let mut expr = self.comparison();
-        while self.match_variants(vec![TokenVariant::BangEqual, TokenVariant::EqualEqual]) {
-            let operator = self.previous();
-            let right = self.comparison();
-            expr = Expr::binary(operator, expr, right);
-        }
-        todo!()
-    }
-    fn comparison(&self) {
-        todo!()
-    }
-
-    fn match_variants(&self, token_variants: Vec<TokenVariant>) -> bool {
-        for variant in token_variants {
-            if self.check(variant) {
-                self.advance();
-                return true;
+        let mut expr = self.comparison()?;
+        loop {
+            match self.current() {
+                Some(token) if token.variant == BangEqual || token.variant == EqualEqual => {
+                    self.advance();
+                    let right = self.comparison()?;
+                    expr = Expr::binary(token, expr, right);
+                }
+                Some(_) => break,
+                None => break,
             }
         }
-        false
+        Ok(expr)
     }
-    fn advance(&mut self) -> Option<&Token> {
+    fn comparison(&mut self) -> Result<Expr> {
+        let mut expr = self.term()?;
+        loop {
+            match self.current() {
+                Some(token)
+                    if token.variant == Greater
+                        || token.variant == GreaterEqual
+                        || token.variant == Less
+                        || token.variant == LessEqual =>
+                {
+                    self.advance();
+                    let right = self.term()?;
+                    expr = Expr::binary(token, expr, right);
+                }
+                Some(_) => break,
+                None => break,
+            }
+        }
+        Ok(expr)
+    }
+
+    fn term(&mut self) -> Result<Expr> {
+        let mut expr = self.factor()?;
+        loop {
+            match self.current() {
+                Some(token) if token.variant == Plus || token.variant == Minus => {
+                    self.advance();
+                    let right = self.factor()?;
+                    expr = Expr::binary(token, expr, right);
+                }
+                Some(_) => break,
+                None => return Err(ParserError::new(None)),
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn factor(&mut self) -> Result<Expr> {
+        let mut expr = self.unary()?;
+        loop {
+            match self.current() {
+                Some(token) if token.variant == Slash || token.variant == Star => {
+                    self.advance();
+                    let right = self.unary()?;
+                    expr = Expr::binary(token, expr, right);
+                }
+                Some(_) => break,
+                None => return Err(ParserError::new(None)),
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn unary(&mut self) -> Result<Expr> {
+        match self.current() {
+            Some(token) if token.variant == Slash || token.variant == Minus => {
+                self.advance();
+                let right = self.unary()?;
+                Ok(Expr::unary(token, right))
+            }
+            _ => self.primary(),
+        }
+    }
+
+    fn primary(&mut self) -> Result<Expr> {
+        match self.current() {
+            Some(Token { variant: False, .. }) => {
+                self.advance();
+                Ok(Expr::Literal(Literal::BoolLiteral(false)))
+            }
+            Some(Token { variant: True, .. }) => {
+                self.advance();
+                Ok(Expr::Literal(Literal::BoolLiteral(true)))
+            }
+            Some(Token { variant: Nil, .. }) => {
+                self.advance();
+                Ok(Expr::Literal(Literal::NilLiteral))
+            }
+            Some(Token {
+                variant: Number(n), ..
+            }) => {
+                self.advance();
+                Ok(Expr::Literal(Literal::NumberLiteral(n)))
+            }
+            Some(Token {
+                variant: String(s), ..
+            }) => {
+                self.advance();
+                Ok(Expr::Literal(Literal::StringLiteral(s)))
+            }
+            Some(Token {
+                variant: LeftParen, ..
+            }) => {
+                self.advance();
+                let expr = self.expression()?;
+                match self.current() {
+                    Some(Token {
+                        variant: RightParen,
+                        ..
+                    }) => {
+                        self.advance();
+                        Ok(Expr::grouping(expr))
+                    }
+                    unexpected => Err(ParserError::new(unexpected)),
+                }
+            }
+            unexpected @ Some(_) => Err(ParserError::new(unexpected)),
+            None => Err(ParserError::new(None)),
+        }
+    }
+
+    fn current(&self) -> Option<Token> {
+        self.tokens.get(self.current).cloned()
+    }
+
+    fn advance(&mut self) -> Option<Token> {
         if !self.is_at_end() {
             self.current += 1;
         }
         self.previous()
     }
 
-    fn check(&self, variant: TokenVariant) -> bool {
-        if self.is_at_end() {
-            return false;
-        }
-        match self.peek() {
-            Some(token) => token.variant == variant,
-            _ => false,
-        }
-    }
     fn is_at_end(&self) -> bool {
         match self.peek() {
-            Some(token) => token.variant == TokenVariant::Eof,
+            Some(token) => token.variant == Eof,
             _ => false,
         }
     }
@@ -75,7 +177,7 @@ impl Parser {
         self.tokens.get(self.current)
     }
 
-    fn previous(&self) -> Option<&Token> {
-        self.tokens.get(self.current - 1)
+    fn previous(&self) -> Option<Token> {
+        self.tokens.get(self.current - 1).cloned()
     }
 }
